@@ -12,7 +12,7 @@ sample_delay = 0.005
 #BAT1_V_MON = 23
 #BAT2_V_MON = 16
 
-BAT_V_MUX = 18
+BAT_V_MUX = 25
 
 GPIO.setmode(GPIO.BCM)
 #GPIO.setmode(GPIO.BOARD)
@@ -154,9 +154,13 @@ class i2cCommand:
 				print("Could not connect to battery monitor: (set_fuelguage_control_reg) "), i
 		'''
 
-		#for single fuel gauge monitor
-		bus.write_byte_data(FUELGUAGE_ADDR, FUELGUAGE_REG_ADDR_01, value)
+		try:
+
+			#for single fuel gauge monitor
+			bus.write_byte_data(FUELGUAGE_ADDR, FUELGUAGE_REG_ADDR_01, value)
 		
+		except:
+			print("Error No Battery Detect!!")
 
 
 		'''
@@ -229,10 +233,15 @@ class i2cCommand:
 		#convert I and J to 16bit variable, then (value / 65535) x 6V = Voltage 
 
 		#read registers I and J (8 and 9 sequentially)
-		voltage_msb = float(0.0)
-		voltage_lsb = float(0.0)
-		temp_msb = float(0.0)
-		temp_lsb = float(0.0)
+		voltage_msb_flt = float(0.0)
+		voltage_lsb_flt = float(0.0)
+		temp_msb_flt = float(0.0)
+		temp_lsb_flt = float(0.0)
+		voltage_msb = 0x00
+		voltage_lsb = 0x00
+		temp_msb = 0x00
+		temp_lsb = 0x00
+	
 
 		#all_regs = bus.read_i2c_block_data(FUELGUAGE_ADDR, FUELGUAGE_REG_ADDR_08, 16)
 		#status, control, acc_msb, acc_lsb, chrgthhi_msb, chrgethhi_lsb, chrgthlow_msb, chrgthlow_lsb, voltage_msb, voltage_lsb, voltth_msb, voltth_lsb, temp_msb, temp_lsb, tempth_msb, tempth_lsb = all_regs
@@ -278,7 +287,8 @@ class i2cCommand:
 		#print "voltage_msb: ", voltage_msb
 		#print "voltage_lsb: ", voltage_lsb
 
-		if (battery_sel == 1 and battery1_status_flag == 1) or (battery_sel == 2 and battery2_status_flag == 1):
+		#if (battery_sel == 1 and battery1_status_flag == 1) or (battery_sel == 2 and battery2_status_flag == 1):
+		if (battery_sel == 1) or (battery_sel == 2):
 			
 
 			voltage_16bit = float(0.0)
@@ -442,6 +452,8 @@ while 1:
 
 	testpoll.set_battery_mux_selection(1)
 
+	testpoll.set_fuelguage_control_reg(0xC0, 0x80, 0x10, 0x00)
+
 
 	for i in range(int(SAMPLES)):
 
@@ -474,6 +486,8 @@ while 1:
 	battery_voltage_temp = 0.0
 
 	testpoll.set_battery_mux_selection(2)
+
+	testpoll.set_fuelguage_control_reg(0xC0, 0x80, 0x10, 0x00)
 
 
 	for i in range(int(SAMPLES)):
